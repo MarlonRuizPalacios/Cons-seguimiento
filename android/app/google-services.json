@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "199538053199",
+    "project_id": "seguimiento-carlos-2025",
+    "storage_bucket": "seguimiento-carlos-2025.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199538053199:android:b22e210b6af1043d539a3a",
+        "android_client_info": {
+          "package_name": "com.example.seguimiento_de_construcion"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "199538053199-63a88ki27vsbas47oh134aeo9ug1ak8a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9mNkLyllq67wErMrN1oYylyymJNOpMkk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "199538053199-63a88ki27vsbas47oh134aeo9ug1ak8a.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

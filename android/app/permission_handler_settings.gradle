@@ -1,0 +1,11 @@
+gradle.projectsEvaluated {
+    rootProject.allprojects {
+        configurations {
+            all {
+                resolutionStrategy {
+                    force 'com.android.support:support-v4:28.0.0'
+                }
+            }
+        }
+    }
+}
