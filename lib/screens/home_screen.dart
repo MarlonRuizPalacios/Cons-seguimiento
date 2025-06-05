@@ -6,6 +6,9 @@ import 'login_screen.dart';
 import 'edit_profile_screen.dart';
 import '../widgets/image_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../widgets/profile_option.dart';
+import '../widgets/detail_item.dart';
+import '../widgets/invitation_list_panel.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -270,9 +273,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      _buildProfileOption(
+                      ProfileOption(
                         icon: Icons.settings,
                         text: "Administrar tu cuenta",
+                        isDarkMode: isDarkMode,
                         onTap: () {
                           _removeOverlay();
                           Navigator.push(
@@ -291,10 +295,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                       Divider(height: 1),
-                      _buildProfileOption(
+                      ProfileOption(
                         icon: Icons.exit_to_app,
                         text: "Cerrar sesión",
                         color: Colors.red,
+                        isDarkMode: isDarkMode,
                         onTap: () {
                           _removeOverlay();
                           logout(context);
@@ -347,192 +352,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _buildProfileOption({
-    required IconData icon,
-    required String text,
-    Color? color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color:
-                  color ?? (isDarkMode ? Colors.grey[300] : Colors.grey[700]),
-            ),
-            SizedBox(width: 16),
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 14,
-                color: color ?? (isDarkMode ? Colors.white : Colors.black),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showNotificationPanel() {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
-        return _buildInvitationListPanel(); // Widget para mostrar la lista de invitaciones
-      },
-    );
-  }
-
-  Widget _buildInvitationListPanel() {
-    if (user == null) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text('Usuario no autenticado'),
-      );
-    }
-
-    return StreamBuilder<QuerySnapshot>(
-      stream:
-          FirebaseFirestore.instance
-              .collection('invitations')
-              .where('userId', isEqualTo: user!.uid)
-              .where('status', isEqualTo: 'pending')
-              .snapshots(),
-      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        if (snapshot.hasError) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Algo salió mal al cargar las invitaciones: ${snapshot.error}',
-            ),
-          );
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: CircularProgressIndicator(),
-          );
-        }
-
-        if (snapshot.data!.docs.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text('No tienes invitaciones pendientes.'),
-          );
-        }
-
-        return ListView.builder(
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            DocumentSnapshot document = snapshot.data!.docs[index];
-            Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-            String projectId = data['projectId'];
-            String invitedByUserId = data['invitedBy'];
-            String role = data['role'];
-            String invitationId = document.id;
-
-            return FutureBuilder<DocumentSnapshot>(
-              future:
-                  FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(invitedByUserId)
-                      .get(),
-              builder: (
-                BuildContext context,
-                AsyncSnapshot<DocumentSnapshot> senderSnapshot,
-              ) {
-                String senderUsername = 'Cargando...';
-                if (senderSnapshot.hasData && senderSnapshot.data!.exists) {
-                  senderUsername =
-                      senderSnapshot.data!['username'] ?? 'Usuario desconocido';
-                }
-
-                return FutureBuilder<DocumentSnapshot>(
-                  future:
-                      FirebaseFirestore.instance
-                          .collection('projects')
-                          .doc(projectId)
-                          .get(),
-                  builder: (
-                    BuildContext context,
-                    AsyncSnapshot<DocumentSnapshot> projectSnapshot,
-                  ) {
-                    String projectName = 'Cargando...';
-                    if (projectSnapshot.hasData &&
-                        projectSnapshot.data!.exists) {
-                      projectName =
-                          projectSnapshot.data!['name'] ?? 'Nombre desconocido';
-                    }
-
-                    return Card(
-                      margin: EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Invitación al proyecto: $projectName',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 8),
-                            Text('Enviada por: $senderUsername'),
-                            Text('Rol asignado: $role'),
-                            SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                TextButton(
-                                  onPressed: () {
-                                    FirebaseFirestore.instance
-                                        .collection('invitations')
-                                        .doc(invitationId)
-                                        .update({'status': 'rejected'});
-                                  },
-                                  child: Text(
-                                    'Rechazar',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                ),
-                                SizedBox(width: 16),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    await FirebaseFirestore.instance
-                                        .collection('invitations')
-                                        .doc(invitationId)
-                                        .update({'status': 'accepted'});
-                                    await FirebaseFirestore.instance
-                                        .collection('projectUsers')
-                                        .add({
-                                          'projectId': projectId,
-                                          'userId': user!.uid,
-                                          'role': role,
-                                          'joinedAt':
-                                              FieldValue.serverTimestamp(),
-                                        });
-                                  },
-                                  child: Text('Aceptar'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            );
-          },
-        );
+        InvitationListPanel(user: user); // Widget para mostrar la lista de invitaciones
       },
     );
   }
@@ -1005,41 +829,46 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDetailItem(
-                "Tipo de Obra:",
-                projectData['type'] ?? "No especificado",
+              DetailItem(
+                label: "Tipo de Obra:",
+                value: projectData['type'] ?? "No especificado",
+                isDarkMode: isDarkMode,
               ),
               SizedBox(height: 16),
-              _buildDetailItem(
-                "Descripción:",
-                projectData['description'] ?? "Sin descripción",
+              DetailItem(
+                label: "Descripción:",
+                value: projectData['description'] ?? "Sin descripción",
+                isDarkMode: isDarkMode,
               ),
               SizedBox(height: 16),
-              _buildDetailItem(
-                "Trabajadores:",
-                projectData['workers'] ?? "No especificado",
+              DetailItem(
+                label: "Trabajadores:",
+                value: projectData['workers'] ?? "No especificado",
+                isDarkMode: isDarkMode,
               ),
               SizedBox(height: 16),
-              _buildDetailItem(
-                "Fecha Inicio:",
-                projectData['startDate'] != null
+              DetailItem(
+                label: "Fecha Inicio:",
+                value: projectData['startDate'] != null
                     ? (projectData['startDate'] as Timestamp)
                         .toDate()
                         .toLocal()
                         .toString()
                         .split(' ')[0]
                     : "No especificada",
+                isDarkMode: isDarkMode,
               ),
               SizedBox(height: 16),
-              _buildDetailItem(
-                "Fecha Fin Prevista:",
-                projectData['endDate'] != null
+              DetailItem(
+                label: "Fecha Fin Prevista:",
+                value: projectData['endDate'] != null
                     ? (projectData['endDate'] as Timestamp)
                         .toDate()
                         .toLocal()
                         .toString()
                         .split(' ')[0]
                     : "No especificada",
+                isDarkMode: isDarkMode,
               ),
               SizedBox(height: 32),
               Center(
@@ -1128,30 +957,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SizedBox(height: 50), // Agregar espacio extra al final
             ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailItem(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: isDarkMode ? Colors.grey[400] : Colors.grey.shade600,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            color: isDarkMode ? Colors.white : Colors.black,
           ),
         ),
       ],
