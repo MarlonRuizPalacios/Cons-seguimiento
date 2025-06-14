@@ -356,7 +356,9 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
-        InvitationListPanel(user: user); // Widget para mostrar la lista de invitaciones
+        return InvitationListPanel(
+          user: user,
+        ); // Widget para mostrar la lista de invitaciones
       },
     );
   }
@@ -675,8 +677,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       keyboardType: TextInputType.number,
                     ),
                     ListTile(
-                      title: Text(
-                        'Fecha Inicio: ${_startDate.toLocal()}'.split(' ')[0],
+                      title: Text('Fecha Inicio'),
+                      subtitle: Text(
+                        _startDate.toLocal().toString().split(' ')[0],
                       ),
                       trailing: Icon(Icons.calendar_today),
                       onTap: () async {
@@ -694,10 +697,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     ListTile(
-                      title: Text(
-                        'Fecha Fin Prevista: ${_endDate.toLocal()}'.split(
-                          ' ',
-                        )[0],
+                      title: Text('Fecha Fin Previsto'),
+                      subtitle: Text(
+                        _endDate.toLocal().toString().split(' ')[0],
                       ),
                       trailing: Icon(Icons.calendar_today),
                       onTap: () async {
@@ -849,25 +851,27 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: 16),
               DetailItem(
                 label: "Fecha Inicio:",
-                value: projectData['startDate'] != null
-                    ? (projectData['startDate'] as Timestamp)
-                        .toDate()
-                        .toLocal()
-                        .toString()
-                        .split(' ')[0]
-                    : "No especificada",
+                value:
+                    projectData['startDate'] != null
+                        ? (projectData['startDate'] as Timestamp)
+                            .toDate()
+                            .toLocal()
+                            .toString()
+                            .split(' ')[0]
+                        : "No especificada",
                 isDarkMode: isDarkMode,
               ),
               SizedBox(height: 16),
               DetailItem(
                 label: "Fecha Fin Prevista:",
-                value: projectData['endDate'] != null
-                    ? (projectData['endDate'] as Timestamp)
-                        .toDate()
-                        .toLocal()
-                        .toString()
-                        .split(' ')[0]
-                    : "No especificada",
+                value:
+                    projectData['endDate'] != null
+                        ? (projectData['endDate'] as Timestamp)
+                            .toDate()
+                            .toLocal()
+                            .toString()
+                            .split(' ')[0]
+                        : "No especificada",
                 isDarkMode: isDarkMode,
               ),
               SizedBox(height: 32),

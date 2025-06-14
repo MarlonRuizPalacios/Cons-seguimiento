@@ -9,7 +9,7 @@ class ImageService {
   Future<void> uploadImage(String userId, Uint8List imageBytes) async {
     try {
       final base64String = base64Encode(imageBytes);
-      
+
       await _firestore.collection('user_images').doc(userId).set({
         'image': base64String,
         'timestamp': FieldValue.serverTimestamp(),
@@ -27,7 +27,7 @@ class ImageService {
   Future<Uint8List?> getImage(String userId) async {
     try {
       final doc = await _firestore.collection('user_images').doc(userId).get();
-      
+
       if (doc.exists && doc.data()?['image'] != null) {
         return base64Decode(doc.data()!['image']);
       }
